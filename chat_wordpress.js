@@ -1,8 +1,63 @@
 const OpenAI = require('openai');
 const axios = require('axios');
 const fs = require('fs');
+const readline = require('readline');
+const filePath = './adder.txt';
 const path = './apiKeys.txt';
-const adder = '广州到北京汽车托运'
+const adder = '';
+
+
+// 读取文件内容并处理
+async function processFile() {
+    try {
+        // 逐行读取文件
+        const fileStream = fs.createReadStream(filePath);
+        const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity,
+        });
+
+        for await (const line of rl) {
+            // 处理每一行的变量
+            const addr = line.trim(); // 获取变量并赋值给addr变量
+            console.log('Processing variable:', addr);
+
+            // 这里可以进行其他操作，例如使用addr进行一些处理
+
+            adder = addr
+
+            // 将文件中的该行删除
+            removeLineFromFile(filePath, line);
+        }
+
+        console.log('File processing complete.');
+    } catch (error) {
+        console.error('Error reading file:', error);
+    }
+}
+
+// 从文件中删除指定行
+function removeLineFromFile(filePath, lineToRemove) {
+    const data = fs.readFileSync(filePath, 'utf8').split('\n');
+
+    const updatedData = data.filter((line) => line !== lineToRemove);
+
+    fs.writeFileSync(filePath, updatedData.join('\n'));
+}
+
+const getNumber = 0
+if (getNumber === 100) {
+    // 重置计数器 并进行下一次循环
+    // 启动文件处理
+    processFile();
+    getNumber = 0
+} else if (getNumber === 0) {
+    // 启动文件处理
+    processFile();
+} else if (getNumber < 100 && getNumber > 0) {
+    return
+}
+
 
 // 定义要替换的关键词和对应的替换内容
 const replacements = {
@@ -56,7 +111,6 @@ function getValidApiKey() {
     throw new Error('没有找到有效的key');
 }
 
-
 // gpt3.5生成文本
 async function generateContent(messageContent) {
     let apiKey = getValidApiKey();
@@ -83,25 +137,23 @@ async function generateContent(messageContent) {
     }
 }
 
+
+
 // 主函数 内容加工 文章展示
 async function main() {
     const articleText = await generateContent(`生成一条关于${adder}的文章 要求：扩展性可以较高,随机组词，不需要特殊符号`);
     const titleText = await generateContent(`生成一条关于${adder}的标题 要求：扩展性可以较高,随机组词，标题中不要带特殊符号`);
     const description = await generateContent(`生成一条关于${adder}的描述 要求：扩展性可以较高,随机组词，40个字左右，不需要特殊符号`);
     const keywords = await generateContent(`生成关于${adder}的搜索关键词5个 要求：扩展性可以较高,随机组词,顿号分割，不需要特殊符号`);
-
     // 构建正则表达式的模式
     const pattern = new RegExp(Object.keys(replacements).join("|"), "g");
-
     // 替换后的文本
     const replacedText = articleText.replace(pattern, match => replacements[match]);
-
     // 你的 WordPress 网站信息
     const wpApiUrl = 'https://www.yunche06.com/wp-json';
     const username = 'sunjian';
     const password = 'jkNcNZ03IniwwE1z1O6kGSrA';
     const token = Buffer.from(`${username}:${password}`, 'utf8').toString('base64');
-
     //wordpress 文章数据
     const postData = {
         title: titleText,
@@ -125,6 +177,7 @@ async function main() {
     })
         .then(response => {
             console.log('文章创建成功', response.data);
+            getNumber++
         })
         .catch(error => {
             console.error('创建文章失败', error);

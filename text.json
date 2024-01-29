@@ -1,0 +1,55 @@
+{
+  "api": {
+    "services": [
+      "HandlerService",
+      "LoggerService",
+      "StatsService"
+    ],
+    "tag": "api"
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 62789,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1"
+      },
+      "tag": "api"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "streamSettings": {
+        "sockopt": {
+          "tcpFastOpen": true,
+          "interface": "WARP"
+        }
+      },
+      "settings": {
+        "domainStrategy": "AsIs"
+      },
+      "tag": "my-warp"
+    }
+  ],
+  "policy": {
+    "system": {
+      "statsInboundDownlink": true,
+      "statsInboundUplink": true
+    }
+  },
+  "routing": {
+    "rules": [
+      {
+        "inboundTag": [
+          "api"
+        ],
+        "network": "tcp,udp",
+        "outboundTag": "my-warp",
+        "type": "field"
+      }
+    ]
+  },
+  "stats": {}
+}
