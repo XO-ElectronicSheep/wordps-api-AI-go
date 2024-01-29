@@ -5,7 +5,6 @@ const path = './apiKeys.txt';
 class ContentGenerator {
     // 构造函数
     constructor() {
-
         this.replacements = {
             首先: "",
             一旦: "",
@@ -40,14 +39,11 @@ class ContentGenerator {
             throw new Error('文件中没有变量了');
         }
     }
+    
 
     setAdder(newAdder) {
         this.adder = newAdder;
     }
-
-    
-    
-
     // 检查API密钥是否有效
     async checkApiKeyValidity(apiKey) {
         const openai = new OpenAI({ apiKey });
@@ -156,6 +152,7 @@ class ContentGenerator {
         }
     }
 }
+
 
 // 创建实例并执行
 const contentGenerator = new ContentGenerator();
