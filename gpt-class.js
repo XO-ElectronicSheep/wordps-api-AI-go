@@ -45,6 +45,9 @@ class ContentGenerator {
         this.adder = newAdder;
     }
 
+    
+    
+
     // 检查API密钥是否有效
     async checkApiKeyValidity(apiKey) {
         const openai = new OpenAI({ apiKey });
