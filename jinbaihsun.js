@@ -1,11 +1,107 @@
 const OpenAI = require('openai');
 const axios = require('axios');
 const fs = require('fs');
-const readline = require('readline');
-const filePath = './adder.txt';
+const mysql = require('mysql');
 const path = './apiKeys.txt';
 
+// 创建数据库连接
+const connection = mysql.createConnection({
+    host: 'mysql',
+    user: 'root',
+    password: 'mysql_jnDyzw',
+    database: 'text'
+});
+
+// 定义全局变量
 let adder;
+
+// 连接数据库
+connection.connect(err => {
+    if (err) {
+        console.error('Error connecting to database:', err);
+        return;
+    }
+    console.log('Connected to database successfully.');
+    // 获取id_get表中的id属性
+    connection.query('SELECT id, frequency FROM id_get', (err, results) => {
+        if (err) {
+            console.error('Error fetching ids and frequencies from id_get table:', err);
+            connection.end(); // 关闭数据库连接
+            return;
+        }
+        // 遍历每个id和frequency
+        results.forEach(row => {
+            const id = row.id;
+            const frequency = row.frequency;
+            // 检查是否需要更新id和frequency
+            if (frequency === 10) {
+                // 更新id_get表中的id和frequency字段
+                connection.query('UPDATE id_get SET id = id + 1, frequency = 0', (err, results) => {
+                    if (err) {
+                        console.error('Error updating id and frequency in id_get table:', err);
+                        connection.end(); // 关闭数据库连接
+                        return;
+                    }
+                    console.log('id and frequency in id_get table have been updated.');
+                    // 根据id获取data值，并赋值给全局变量adder
+                    getDataFromMyTable(id, data => {
+                        adder = data; // 将data的值赋值给adder
+                        console.log('Data:', adder);
+                        connection.end(); // 关闭数据库连接
+                    });
+                });
+            } else {
+                // 更新id_get表中的frequency字段值
+                connection.query('UPDATE id_get SET frequency = ? WHERE id = ?', [frequency + 1, id], (err, results) => {
+                    if (err) {
+                        console.error('Error updating frequency in id_get table:', err);
+                        connection.end(); // 关闭数据库连接
+                        return;
+                    }
+                });
+                // 根据id获取data值，并赋值给全局变量adder
+                getDataFromMyTable(id, data => {
+                    adder = data; // 将data的值赋值给adder
+                    console.log('Data:', adder);
+                });
+            }
+            
+            // 判断id_get表中的id值和my_table中的最后一行的id是否相等
+            connection.query('SELECT id FROM my_table ORDER BY id DESC LIMIT 1', (err, results) => {
+                if (err) {
+                    console.error('Error fetching id from my_table:', err);
+                    connection.end(); // 关闭数据库连接
+                    return;
+                }
+                const lastId = results[0].id; // 获取my_table的最后一行id值
+                if (id === lastId) {
+                    // 将id_get表中的id值设为1
+                    connection.query('UPDATE id_get SET id = 1', (err, results) => {
+                        if (err) {
+                            console.error('Error updating id in id_get table:', err);
+                            connection.end(); // 关闭数据库连接
+                            return;
+                        }
+                        console.log('id in id_get table has been reset to 1.');
+                    });
+                }
+            });
+        });
+    });
+});
+
+// 根据id获取my_table表中的data
+function getDataFromMyTable(id, callback) {
+    connection.query('SELECT data FROM my_table WHERE id = ?', [id], (err, results) => {
+        if (err) {
+            console.error('Error fetching data from my_table:', err);
+            callback(null); // 回调null表示出错
+            return;
+        }
+        const data = results[0].data; // 获取data值
+        callback(data); // 执行回调函数并传递data值
+    });
+}
 
 
 
@@ -139,7 +235,6 @@ async function main() {
     })
         .then(response => {
             console.log('文章创建成功', response.data);
-            getNumber++
         })
         .catch(error => {
             console.error('创建文章失败', error);
