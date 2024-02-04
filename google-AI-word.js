@@ -1,15 +1,24 @@
-const OpenAI = require('openai');
+// node --version # Should be >= 18
+// npm install @google/generative-ai
 const axios = require('axios');
-const fs = require('fs');
 const mysql = require('mysql');
-const path = './apiKeys.txt';
+const {
+    GoogleGenerativeAI,
+    HarmCategory,
+    HarmBlockThreshold,
+} = require("@google/generative-ai");
+
+const MODEL_NAME = "gemini-pro";
+const API_KEY = "AIzaSyBYnddJ7GuWuiSFxNxrP-OXnMbqsCgIGcg";
+
+
 // 定义全局变量
 let adder;
 // 创建数据库连接
 const connection = mysql.createConnection({
-    host: 'mysql',
+    host: '127.0.0.1',
     user: 'root',
-    password: 'mysql_jnDyzw',
+    password: 'mysql_cy55Re',
     database: 'text',
 });
 async function connectToDatabase() {
@@ -146,7 +155,7 @@ async function mainMysql() {
 }
 // 运行sql函数
 mainMysql();
-// 定义要替换的关键词和对应的替换内容
+
 const replacements = {
     首先: "",
     一旦: "",
@@ -156,76 +165,54 @@ const replacements = {
     所以: "",
     接下来: '',
     总之: '',
-    总结:'',
+    总结: '',
     最终: '',
     其次: '',
     另外: '',
     综上所述: '',
-    总的来说: ''
+    总的来说: '',
 };
-async function checkApiKeyValidity(apiKey) {
-    // 用于检查API密钥的有效性和余额
-    // 如果API密钥有效且余额充足，返回true，否则返回false
-    const openai = new OpenAI({ apiKey });
-    try {
-        await openai.chat.completions.create({
-            model: "text-embedding-3-large",
-            messages: [{ role: "user", content: 'test' }],
-            stream: true,
-            temperature: 0.9
-        });
-        return true;
-    } catch (error) {
-        return false;
-    }
+
+async function generateContent(message) {
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+    const generationConfig = {
+        temperature: 0.9,
+        topK: 1,
+        topP: 1,
+        maxOutputTokens: 2048,
+    };
+    const safetySettings = [
+        {
+            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+    ];
+    const parts = [
+        { text: message }
+    ];
+    const result = await model.generateContent({
+        contents: [{ role: "user", parts }],
+        generationConfig,
+        safetySettings,
+    });
+    const response = result.response;
+    generatedText = response.text();
+    return generatedText;
 }
-function removeApiKeyFromFile(apiKey) {
-    let apiKeys = fs.readFileSync(path, 'utf-8').split('\n');
-    apiKeys = apiKeys.filter(key => key !== apiKey);
-    fs.writeFileSync(path, apiKeys.join('\n'), 'utf-8');
-}
-function getValidApiKey() {
-    let apiKeys = fs.readFileSync(path, 'utf-8').split('\n');
-    for (let i = 0; i < apiKeys.length; i++) {
-        if (checkApiKeyValidity(apiKeys[i])) {
-            return apiKeys[i];
-        } else {
-            removeApiKeyFromFile(apiKeys[i]);
-        }
-    }
-    throw new Error('没有找到有效的key');
-}
-// gpt3.5生成文本
-async function generateContent(messageContent) {
-    let apiKey = getValidApiKey();
-    const openai = new OpenAI({ apiKey });
-    try {
-        const stream = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: messageContent }],
-            stream: true,
-            temperature: 0.9
-        });
-        let generatedText = "";
-        for await (const chunk of stream) {
-            const content = chunk.choices[0]?.delta?.content || "";
-            generatedText += content;
-        }
-        return generatedText;
-    } catch (error) {
-        if (error.message.includes('key资金不足')) {
-            // Handle rate limiting by switching to the next key
-            removeApiKeyFromFile(apiKey);
-            return generateContent(messageContent);
-        } else if (error.message.includes('Code: 429')) {
-            // Handle general rate limiting by switching to the next key
-            removeApiKeyFromFile(apiKey);
-            return generateContent(messageContent);
-        }
-        throw error;
-    }
-}
-// 获取 WordPress 分类目录
+
 async function getCategories() {
     try {
         const response = await axios.get('https://www.yunche168.cn/wp-json/wp/v2/categories');
@@ -235,13 +222,12 @@ async function getCategories() {
     }
 }
 
-let num = 0
-// 主函数 内容加工 文章展示
+
 async function main() {
-    const articleText = await generateContent(`生成一条关于${adder}的文章 要求：扩展性可以较高,随机组词，不需要特殊符号,500字左右`);
-    const titleText = await generateContent(`生成一条关于${adder}的标题 要求：扩展性可以较高,随机组词，标题中不要带特殊符号`);
-    const description = await generateContent(`生成一条关于${adder}的描述 要求：扩展性可以较高,随机组词，40个字左右，不需要特殊符号`);
-    const keywords = description 
+    const articleText = await generateContent(`写一条关于${adder}的文章 要求：不要特殊符号例如**,500字左右,不要出现公司和联系方式`);
+    const titleText = await generateContent(`写一条关于${adder}的标题 要求：不要特殊符号例如**`);
+    const description = await generateContent(`写一条关于${adder}的描述 要求：200字左右，不要特殊符号例如**`);
+    const keywords = await generateContent(`写8个关于${adder}的关键词 要求：不要特殊符号例如**`);
     //await generateContent(`生成关于${adder}的搜索关键词5个 要求：扩展性可以较高,随机组词,顿号分割，不需要特殊符号`);
     // 构建正则表达式的模式
     const pattern = new RegExp(Object.keys(replacements).join("|"), "g");
@@ -286,17 +272,7 @@ async function main() {
             return num = 2
         });
 }
-
-if(adder){
+// 在这里调用 main 函数
+if (adder) {
     main();
 }
-
-if(num === 1){
-    console.log('文章书写完成');
-    process.exit();
-}else if(num ===2){
-    console.log('文章书写失败');
-    process.exit();
-}
-
-
