@@ -156,7 +156,7 @@ const replacements = {
     所以: "",
     接下来: '',
     总之: '',
-    总结:'',
+    总结: '',
     最终: '',
     其次: '',
     另外: '',
@@ -241,7 +241,7 @@ async function main() {
     const articleText = await generateContent(`生成一条关于${adder}的文章 要求：扩展性可以较高,随机组词，不需要特殊符号,500字左右`);
     const titleText = await generateContent(`生成一条关于${adder}的标题 要求：扩展性可以较高,随机组词，标题中不要带特殊符号`);
     const description = await generateContent(`生成一条关于${adder}的描述 要求：扩展性可以较高,随机组词，40个字左右，不需要特殊符号`);
-    const keywords = description 
+    const keywords = description
     //await generateContent(`生成关于${adder}的搜索关键词5个 要求：扩展性可以较高,随机组词,顿号分割，不需要特殊符号`);
     // 构建正则表达式的模式
     const pattern = new RegExp(Object.keys(replacements).join("|"), "g");
@@ -287,14 +287,14 @@ async function main() {
         });
 }
 
-if(adder){
+if (adder) {
     main();
 }
 
-if(num === 1){
+if (num === 1) {
     console.log('文章书写完成');
     process.exit();
-}else if(num ===2){
+} else if (num === 2) {
     console.log('文章书写失败');
     process.exit();
 }
