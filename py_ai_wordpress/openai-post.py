@@ -1,5 +1,4 @@
 from openai import OpenAI
-import mysql.connector
 import requests
 import random
 import re
@@ -85,8 +84,12 @@ def get_chat_completion(api_key, base_url, model, user_message):
         return None
 
 # 调用函数并打印结果
-api_key = "sk-jqqOuC7GWcCnNA3E45E84a5020Cc49D9A1A1E9B5F94eBcBa"
-api_base = "https://gpt.mnxcc.com/v1"
+#api_key = "sk-jqqOuC7GWcCnNA3E45E84a5020Cc49D9A1A1E9B5F94eBcBa"
+#api_base = "https://gpt.mnxcc.com/v1"
+
+api_key = "sk-lQQc4XDB0CQipHLVF3A9AaBf0b224bA8B7EbB08b96027fB6"
+api_base = "http://13.113.195.19:3000/v1"
+
 model = "gpt-3.5-turbo"
 
 # Check if adder_value is obtained before using it
