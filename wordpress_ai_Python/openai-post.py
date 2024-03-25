@@ -8,11 +8,12 @@ import pymysql.cursors
 
 def main_mysql():
     # Connect to the database
-    connection = pymysql.connect(host='127.0.0.1',
-                                 user='root',
-                                 password='mysql_NBByjs',
-                                 database='text',
-                                 cursorclass=pymysql.cursors.DictCursor)
+    connection = pymysql.connect(
+        host='127.0.0.1',
+        user='root',
+        password='mysql_NBByjs',
+        database='text',
+        cursorclass=pymysql.cursors.DictCursor)
 
     try:
         with connection.cursor() as cursor:
@@ -85,7 +86,7 @@ def get_chat_completion(api_key, base_url, model, user_message):
         return None
 
 # 调用函数并打印结果
-api_key = "sk-abG3QEPU7TvqafIoA73c208d45744c8d8cE2Bc25A61bAcDa"
+api_key = "sk-IK1jN0JCAuWVynhB98Ea709cB2E24cC598288393222cFcE2"
 api_base = "https://gpt.mnxcc.com/v1"
 model = "gpt-3.5-turbo"
 
