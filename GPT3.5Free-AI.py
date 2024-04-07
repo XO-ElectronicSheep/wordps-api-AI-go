@@ -1,4 +1,6 @@
-#使用chatgpt免登录机制，进行请求,无限制
+#使用chatgpt免登录机制，进行请求,无限制 
+# 未完成 
+# 步骤梳理 重建sql - 重写请求，去除openai包  
 from openai import OpenAI
 import mysql.connector
 import requests
